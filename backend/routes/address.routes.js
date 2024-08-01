@@ -7,7 +7,7 @@ import {
   getAddressWithUserId,
   updateAddress,
   updateAddressWithUserId,
-} from "../controllers/address.category.js";
+} from "../controllers/address.controller.js";
 
 const router = express.Router();
 

@@ -141,7 +141,7 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
-export const updateOrderToPaid = async (req, res) => {
+export const updateOrder = async (req, res) => {
   try {
     const {
       orderItems,

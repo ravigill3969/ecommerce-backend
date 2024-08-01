@@ -7,6 +7,7 @@ import categoryRoutes from "./routes/category.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
 import addressRoutes from "./routes/address.routes.js";
+import orderRoutes from "./routes/order.routes.js";
 import connectDB from "./DB.js";
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use("/api/category", categoryRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/review", reviewRoutes);
 app.use("/api/address", addressRoutes);
+app.use("/api/order", orderRoutes);
 app.use("*", (req, res) => {
   res.status(404).json({ message: "This route does not exist" });
 });
