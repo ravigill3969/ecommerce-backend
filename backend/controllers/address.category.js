@@ -1,4 +1,5 @@
 import Address from "../models/address.model.js";
+import User from "../models/user.models.js";
 
 // const addressSchema = mongoose.Schema({
 //     userId: {
@@ -33,6 +34,11 @@ export const createAddress = async (req, res) => {
     });
   }
 
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ status: "fail", message: "User not found" });
+  }
+
   try {
     const newAddress = new Address({
       userId,
@@ -42,6 +48,10 @@ export const createAddress = async (req, res) => {
       country,
     });
     await newAddress.save();
+
+    user.address = newAddress._id;
+    await user.save();
+
     res.status(201).json(newAddress);
   } catch (error) {
     res.status(500).json({ status: "fail", message: "Server error" });

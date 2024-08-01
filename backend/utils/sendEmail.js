@@ -64,7 +64,7 @@ export  async function sendEmail() {
   async function sendMessage(auth) {
     const gmail = google.gmail({ version: "v1", auth });
     const email = [
-      'From: "Sender Name" <sender@example.com>',
+      'From: "Sender Name" <gill1234ravi@gmail.com>',
       "To: recipient@example.com",
       "Subject: Test Email from Gmail API",
       "",
