@@ -84,3 +84,5 @@ public/
 
 # Optional logs directory
 logs/
+
+credentials.json
