@@ -27,7 +27,7 @@ const productSchema = mongoose.Schema(
       required: true,
     },
     productRating: { type: Number, default: 0 },
-    numReviews: { type: Number, default: 0 }, 
+    numReviews: { type: Number, default: 0 },
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
   },
   { timestamps: true }

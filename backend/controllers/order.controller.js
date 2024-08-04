@@ -43,36 +43,33 @@
 //   { timestamps: true }
 // );
 import Order from "../models/order.model.js";
+import Product from "../models/product.model.js";
 import User from "../models/user.models.js";
 
 export const createOrder = async (req, res) => {
   try {
     const {
-      userId,
       orderItems,
       paymentMethod,
       paymentDetails,
       taxPrice,
       shippingPrice,
       totalPrice,
-      addressId, // Either existing address ID
-      address, // Or address details to create a new address
       isPaid,
       paidAt,
       orderStatus,
       deliveredAt,
     } = req.body;
 
-    let finalAddressId = addressId;
+    const userId = req.userId;
 
-    // If address details are provided instead of addressId, create a new Address
-    if (!addressId && address) {
-      const newAddress = new Address({
-        user: userId,
-        ...address,
-      });
-      const savedAddress = await newAddress.save();
-      finalAddressId = savedAddress._id;
+    const user = await User.findById(userId);
+
+    const addressId = user.address;
+    if (!addressId) {
+      return res
+        .status(404)
+        .json({ message: "Address not found! Please add an address" });
     }
 
     const newOrder = new Order({
@@ -83,7 +80,7 @@ export const createOrder = async (req, res) => {
       taxPrice,
       shippingPrice,
       totalPrice,
-      addressId: finalAddressId,
+      addressId,
       isPaid,
       paidAt,
       orderStatus,
@@ -91,6 +88,22 @@ export const createOrder = async (req, res) => {
     });
 
     const createdOrder = await newOrder.save();
+
+    // Notify Sellers (console log for now)
+    const productIds = orderItems.map((item) => item.product);
+    const products = await Product.find({ _id: { $in: productIds } }).populate(
+      "sellerID"
+    );
+
+    products.forEach((product) => {
+      const seller = product.sellerID;
+      if (seller) {
+        console.log(
+          `Notification to seller ${seller.email}: You have received a new order with Order ID: ${createdOrder._id} for the product: ${product.productName}. Please pack and ship the item as soon as possible.`
+        );
+      }
+    });
+
     res.status(201).json(createdOrder);
   } catch (error) {
     console.error("Error creating order:", error);
@@ -128,7 +141,7 @@ export const getMyOrders = async (req, res) => {
       res.status(404).json({ status: "fail", message: "User not found" });
     }
 
-    const orders = await Order.find({ user: user._id });
+    const orders = await Order.find({ userId: req.userId });
 
     if (!orders) {
       res.status(404).json({ status: "fail", message: "No order found" });
@@ -182,3 +195,47 @@ export const updateOrder = async (req, res) => {
       .json({ message: "Failed to update order", error: error.message });
   }
 };
+
+export const deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    await order.remove();
+
+    res.status(200).json({ message: "Order deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    res.status(500).json({ message: "Failed to delete order" });
+  }
+};
+
+export const getSellerOrders = async (req, res) => {
+  try {
+    const sellerId = req.userId; // Assuming req.userId is the ID of the logged-in seller
+
+    // Find products that belong to the seller
+    const sellerProducts = await Product.find({ sellerID: sellerId });
+
+    // Extract the product IDs
+    const sellerProductIds = sellerProducts.map((product) => product._id);
+
+    // Find orders that contain the seller's products
+    const orders = await Order.find({
+      "orderItems.product": { $in: sellerProductIds },
+    })
+      .populate("userId", "name email") // Populate buyer info
+      .populate("orderItems.product", "productName productPrice"); // Populate product details
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error fetching seller orders:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to fetch orders", error: error.message });
+  }
+};
+
